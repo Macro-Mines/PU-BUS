@@ -6,6 +6,7 @@ import RouteSelector from './components/RouteSelector'
 import BusInfoOverlay from './components/BusInfoOverlay'
 import StopInfoOverlay from './components/StopInfoOverlay'
 import LocationToggle from './components/LocationToggle'
+import InstallPrompt from './components/InstallPrompt'
 import './index.css'
 
 export default function App() {
@@ -139,6 +140,8 @@ export default function App() {
             selectedRoute={selectedRoute}
           />
         )}
+        {/* PWA Install Prompt */}
+        <InstallPrompt />
       </div>
     </>
   )
