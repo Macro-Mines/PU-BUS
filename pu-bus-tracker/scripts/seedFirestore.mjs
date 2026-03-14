@@ -63,17 +63,21 @@ const ROUTES = {
       { latitude: 12.029188, longitude: 79.852368 },
       { latitude: 12.027674, longitude: 79.853402 },
       { latitude: 12.028419, longitude: 79.855489 },
-      { latitude: 12.028858, longitude: 79.856544 },
-      { latitude: 12.032330, longitude: 79.856865 },
+      { latitude: 12.028834, longitude: 79.856575 }, // Checkpoint KVS
+      { latitude: 12.030604, longitude: 79.856850 }, // Checkpoint AP
+      { latitude: 12.031446, longitude: 79.857302 }, // Checkpoint SJ inner circle
+      { latitude: 12.032330, longitude: 79.856865 }, // 12. Mass Media
       { latitude: 12.033131, longitude: 79.857597 },
       { latitude: 12.032327, longitude: 79.858761 },
       { latitude: 12.031327, longitude: 79.857984 },
       // Return: 14 → 1
       { latitude: 12.032327, longitude: 79.858761 },
       { latitude: 12.033131, longitude: 79.857597 },
-      { latitude: 12.032330, longitude: 79.856865 },
-      { latitude: 12.028858, longitude: 79.856544 },
-      { latitude: 12.028419, longitude: 79.855489 },
+      { latitude: 12.032330, longitude: 79.856865 }, // 12. Mass Media
+      { latitude: 12.031446, longitude: 79.857302 }, // Checkpoint SJ inner circle
+      { latitude: 12.030604, longitude: 79.856850 }, // Checkpoint AP
+      { latitude: 12.028834, longitude: 79.856575 }, // Checkpoint KVS
+      { latitude: 12.028419, longitude: 79.855489 }, // 11. Food Science
       { latitude: 12.027674, longitude: 79.853402 },
       { latitude: 12.029188, longitude: 79.852368 },
       { latitude: 12.029693, longitude: 79.850892 },
