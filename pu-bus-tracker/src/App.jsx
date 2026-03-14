@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { subscribeToBuses } from './services/firebaseService'
+import { subscribeToBuses, subscribeToRoutes, subscribeToStops } from './services/firebaseService'
 import BusMap from './components/BusMap'
 import BottomPanel from './components/BottomPanel'
 import RouteSelector from './components/RouteSelector'
@@ -10,6 +10,9 @@ import './index.css'
 
 export default function App() {
   const [buses, setBuses] = useState({})
+  const [routes, setRoutes] = useState({})
+  const [stops, setStops] = useState({})
+  
   const [selectedRoute, setSelectedRoute] = useState(null)
   const [selectedBus, setSelectedBus] = useState(null)
   const [selectedStop, setSelectedStop] = useState(null)
@@ -19,9 +22,19 @@ export default function App() {
 
   // Subscribe to live bus locations
   useEffect(() => {
-    const unsubscribe = subscribeToBuses((data) => {
-      setBuses(data)
-    })
+    const unsubscribe = subscribeToBuses((data) => setBuses(data))
+    return () => unsubscribe()
+  }, [])
+
+  // Subscribe to routes
+  useEffect(() => {
+    const unsubscribe = subscribeToRoutes((data) => setRoutes(data))
+    return () => unsubscribe()
+  }, [])
+
+  // Subscribe to stops
+  useEffect(() => {
+    const unsubscribe = subscribeToStops((data) => setStops(data))
     return () => unsubscribe()
   }, [])
 
@@ -41,7 +54,7 @@ export default function App() {
     setSelectedStop(stopId)
   }
 
-  const activeBusCount = Object.keys(buses).length
+  const activeBusCount = Object.keys(buses || {}).length
 
   return (
     <>
@@ -58,6 +71,8 @@ export default function App() {
         {/* Map */}
         <BusMap
           buses={buses}
+          routes={routes}
+          stops={stops}
           selectedRoute={selectedRoute}
           selectedBus={selectedBus}
           onSelectBus={handleSelectBus}
@@ -80,6 +95,7 @@ export default function App() {
 
         {/* Route Filter */}
         <RouteSelector
+          routes={routes}
           selectedRoute={selectedRoute}
           onSelectRoute={setSelectedRoute}
         />
@@ -96,6 +112,8 @@ export default function App() {
           <BusInfoOverlay
             busId={selectedBus}
             buses={buses}
+            routes={routes}
+            stops={stops}
             onClose={() => setSelectedBus(null)}
           />
         )}
@@ -104,6 +122,8 @@ export default function App() {
           <StopInfoOverlay
             stopId={selectedStop}
             buses={buses}
+            routes={routes}
+            stops={stops}
             onClose={() => setSelectedStop(null)}
           />
         )}
@@ -112,6 +132,8 @@ export default function App() {
         {!selectedBus && !selectedStop && (
           <BottomPanel
             buses={buses}
+            routes={routes}
+            stops={stops}
             selectedBus={selectedBus}
             onSelectBus={handleSelectBus}
             selectedRoute={selectedRoute}

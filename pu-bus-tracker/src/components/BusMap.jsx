@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useMemo, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { CAMPUS_CENTER, DEFAULT_ZOOM, ROUTES, STOPS } from '../data/demoData'
+import { CAMPUS_CENTER, DEFAULT_ZOOM } from '../data/demoData'
 
 // ─── Distance Helper (Haversine) ─────────────────────
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -66,7 +66,7 @@ function createStopIcon() {
 const stopIcon = createStopIcon()
 
 // ─── User Location Marker Logic ──────────────────────
-function UserLocationMarker({ enabled, onNearestStopFound }) {
+function UserLocationMarker({ enabled, onNearestStopFound, stops }) {
   const [position, setPosition] = useState(null)
   const map = useMap()
 
@@ -79,11 +79,13 @@ function UserLocationMarker({ enabled, onNearestStopFound }) {
       let nearest = null
       let minDistance = Infinity
       
-      Object.values(STOPS).forEach(stop => {
-        const dist = getDistance(e.latlng.lat, e.latlng.lng, stop.lat, stop.lng)
+      Object.entries(stops || {}).forEach(([id, stop]) => {
+        const stopLat = stop.latitude || stop.lat
+        const stopLng = stop.longitude || stop.lng
+        const dist = getDistance(e.latlng.lat, e.latlng.lng, stopLat, stopLng)
         if (dist < minDistance) {
           minDistance = dist
-          nearest = stop
+          nearest = { ...stop, id }
         }
       })
       
@@ -123,6 +125,8 @@ function FlyToLocation({ position }) {
 // ─── Main Component ──────────────────────────────────
 export default function BusMap({
   buses,
+  routes,
+  stops,
   selectedRoute,
   selectedBus,
   onSelectBus,
@@ -131,23 +135,29 @@ export default function BusMap({
   onNearestStopFound
 }) {
   const busArray = useMemo(() =>
-    Object.entries(buses).map(([id, data]) => ({ id, ...data })),
+    Object.entries(buses || {}).map(([id, data]) => ({ id, ...data })),
     [buses]
   )
 
-  const stopsArray = useMemo(() => Object.values(STOPS), [])
-
-  const routesArray = useMemo(() =>
-    selectedRoute
-      ? [ROUTES[selectedRoute]].filter(Boolean)
-      : Object.values(ROUTES),
-    [selectedRoute]
+  const stopsArray = useMemo(() => 
+    Object.entries(stops || {}).map(([id, data]) => ({ id, ...data })), 
+    [stops]
   )
 
+  const routesArray = useMemo(() => {
+    if (selectedRoute && routes[selectedRoute]) {
+      return [ { id: selectedRoute, ...routes[selectedRoute] } ]
+    }
+    return Object.entries(routes || {}).map(([id, data]) => ({ id, ...data }))
+  }, [selectedRoute, routes])
+
   const flyToPos = useMemo(() => {
-    if (selectedBus && buses[selectedBus]?.current_location) {
-      const loc = buses[selectedBus].current_location
-      return [loc.lat, loc.lng]
+    if (selectedBus && buses[selectedBus]) {
+      const bus = buses[selectedBus]
+      // Support both layouts during transition
+      const lat = bus.latitude || bus.current_location?.lat
+      const lng = bus.longitude || bus.current_location?.lng
+      if (lat && lng) return [lat, lng]
     }
     return null
   }, [selectedBus, buses])
@@ -161,9 +171,8 @@ export default function BusMap({
         style={{ width: '100%', height: '100%' }}
         attributionControl={true}
       >
-        {/* OpenStreetMap Tiles */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution='&copy; OpenStreetMap contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
@@ -171,59 +180,78 @@ export default function BusMap({
         <UserLocationMarker 
           enabled={trackingEnabled} 
           onNearestStopFound={onNearestStopFound} 
+          stops={stops}
         />
 
         {/* Fly to selected bus */}
         {flyToPos && <FlyToLocation position={flyToPos} />}
 
         {/* Route Polylines */}
-        {routesArray.map(route => (
-          <Polyline
-            key={route.id}
-            positions={route.path.map(p => [p.lat, p.lng])}
-            pathOptions={{
-              color: route.color,
-              weight: 5,
-              opacity: 0.7,
-              dashArray: selectedRoute === route.id ? null : '10 6',
-              lineCap: 'round',
-              lineJoin: 'round'
-            }}
-          />
-        ))}
+        {routesArray.map(route => {
+          if (!route.path) return null
+          const positions = route.path.map(p => {
+            const lat = p.latitude || p.lat
+            const lng = p.longitude || p.lng
+            return [lat, lng]
+          })
+          
+          return (
+            <Polyline
+              key={route.id}
+              positions={positions}
+              pathOptions={{
+                color: route.color || '#4285F4',
+                weight: 5,
+                opacity: 0.7,
+                dashArray: selectedRoute === route.id ? null : '10 6',
+                lineCap: 'round',
+                lineJoin: 'round'
+              }}
+            />
+          )
+        })}
 
         {/* Stop Markers */}
-        {stopsArray.map(stop => (
-          <Marker
-            key={stop.id}
-            position={[stop.lat, stop.lng]}
-            icon={stopIcon}
-            eventHandlers={{
-              click: () => onSelectStop(stop.id)
-            }}
-          >
-            <Popup className="stop-popup" closeButton={false}>
-              <div className="popup-title">📍 {stop.name}</div>
-              <div className="popup-routes">
-                {(stop.routes || []).map(rId => {
-                  const r = ROUTES[rId]
-                  return r ? (
-                    <span key={rId} className="popup-route-badge" style={{ background: r.color }}>
-                      {r.name}
-                    </span>
-                  ) : null
-                })}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {stopsArray.map(stop => {
+          const lat = stop.latitude || stop.lat
+          const lng = stop.longitude || stop.lng
+          if (!lat || !lng) return null
+
+          return (
+            <Marker
+              key={stop.id}
+              position={[lat, lng]}
+              icon={stopIcon}
+              eventHandlers={{
+                click: () => onSelectStop(stop.id)
+              }}
+            >
+              <Popup className="stop-popup" closeButton={false}>
+                <div className="popup-title">📍 {stop.name}</div>
+                <div className="popup-routes">
+                  {(stop.routes || []).map(rId => {
+                    const r = routes[rId]
+                    return r ? (
+                      <span key={rId} className="popup-route-badge" style={{ background: r.color }}>
+                        {r.name}
+                      </span>
+                    ) : null
+                  })}
+                </div>
+              </Popup>
+            </Marker>
+          )
+        })}
 
         {/* Bus Markers */}
         {busArray.map(bus => {
-          const route = ROUTES[bus.route_id]
+          const route = routes[bus.route_id]
           const color = route?.color || '#4285F4'
-          const pos = [bus.current_location.lat, bus.current_location.lng]
-          const nextStop = STOPS[bus.next_stop]
+          const lat = bus.latitude || bus.current_location?.lat
+          const lng = bus.longitude || bus.current_location?.lng
+          if (!lat || !lng) return null
+
+          const nextStop = stops[bus.next_stop]
           const etaMins = bus.eta_next_stop_seconds
             ? Math.ceil(bus.eta_next_stop_seconds / 60)
             : '—'
@@ -231,24 +259,24 @@ export default function BusMap({
           return (
             <Marker
               key={bus.id}
-              position={pos}
-              icon={createBusIcon(color, bus.bus_number)}
+              position={[lat, lng]}
+              icon={createBusIcon(color, bus.bus_number || 'BUS')}
               zIndexOffset={1000}
               eventHandlers={{
                 click: () => onSelectBus(bus.id)
               }}
             >
               <Popup className="bus-popup" closeButton={false}>
-                <div className="popup-title">🚌 {bus.bus_number}</div>
-                <div className="popup-subtitle" style={{ color: route?.color }}>
-                  {route?.name}
+                <div className="popup-title">🚌 {bus.bus_number || 'BUS'}</div>
+                <div className="popup-subtitle" style={{ color: color }}>
+                  {route?.name || 'In Service'}
                 </div>
                 <div className="popup-detail">
                   → {nextStop?.name || 'En route'} · <strong>{etaMins} min</strong>
                 </div>
-                {bus.current_location?.speed > 0 && (
+                {(bus.speed > 0 || bus.current_location?.speed > 0) && (
                   <div className="popup-detail">
-                    ⚡ {Math.round(bus.current_location.speed)} km/h
+                    ⚡ {Math.round(bus.speed || bus.current_location.speed)} km/h
                   </div>
                 )}
               </Popup>
@@ -259,4 +287,3 @@ export default function BusMap({
     </div>
   )
 }
-

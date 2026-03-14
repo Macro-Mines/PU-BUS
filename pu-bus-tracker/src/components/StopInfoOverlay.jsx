@@ -1,21 +1,19 @@
-import { ROUTES, STOPS } from '../data/demoData'
-
-export default function StopInfoOverlay({ stopId, buses, onClose }) {
-  const stop = STOPS[stopId]
+export default function StopInfoOverlay({ stopId, buses, routes, stops, onClose }) {
+  const stop = stops[stopId]
   if (!stop) return null
 
   // Find buses heading to this stop
-  const incomingBuses = Object.entries(buses)
+  const incomingBuses = Object.entries(buses || {})
     .filter(([_, bus]) => bus.next_stop === stopId)
     .map(([id, bus]) => ({
       id,
       ...bus,
-      route: ROUTES[bus.route_id],
+      route: routes[bus.route_id],
       etaMins: bus.eta_next_stop_seconds ? Math.ceil(bus.eta_next_stop_seconds / 60) : null
     }))
     .sort((a, b) => (a.etaMins || 999) - (b.etaMins || 999))
 
-  const stopRoutes = (stop.routes || []).map(rId => ROUTES[rId]).filter(Boolean)
+  const stopRoutes = (stop.routes || []).map(rId => routes[rId]).filter(Boolean)
 
   return (
     <div className="info-overlay">
@@ -31,6 +29,7 @@ export default function StopInfoOverlay({ stopId, buses, onClose }) {
             <div className="info-detail-content">
               <div className="info-detail-label">Routes</div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 3 }}>
+                {stopRoutes.length === 0 && <span style={{fontSize: 12, color: '#999'}}>No routes defined</span>}
                 {stopRoutes.map(route => (
                   <span
                     key={route.id}
@@ -39,7 +38,7 @@ export default function StopInfoOverlay({ stopId, buses, onClose }) {
                       fontWeight: 600,
                       padding: '2px 10px',
                       borderRadius: 999,
-                      background: route.color,
+                      background: route.color || '#4285F4',
                       color: 'white'
                     }}
                   >
@@ -70,10 +69,10 @@ export default function StopInfoOverlay({ stopId, buses, onClose }) {
                   </div>
                   <div className="bus-card-info">
                     <div className="bus-card-header">
-                      <span className="bus-card-number">{bus.bus_number}</span>
+                      <span className="bus-card-number">{bus.bus_number || 'BUS'}</span>
                     </div>
                     <div className="bus-card-location" style={{ color: bus.route?.color }}>
-                      {bus.route?.name}
+                      {bus.route?.name || 'In Service'}
                     </div>
                   </div>
                   <div className="bus-card-eta">

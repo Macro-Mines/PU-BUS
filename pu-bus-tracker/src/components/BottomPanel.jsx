@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { ROUTES, STOPS } from '../data/demoData'
+import { useState, useCallback, useRef } from 'react'
 
-export default function BottomPanel({ buses, selectedBus, onSelectBus, selectedRoute }) {
+export default function BottomPanel({ buses, routes, stops, selectedBus, onSelectBus, selectedRoute }) {
   const [collapsed, setCollapsed] = useState(false)
   const panelRef = useRef(null)
   const startY = useRef(0)
 
-  const busArray = Object.entries(buses).map(([id, data]) => ({
+  const busArray = Object.entries(buses || {}).map(([id, data]) => ({
     id,
     ...data
   }))
@@ -55,8 +54,8 @@ export default function BottomPanel({ buses, selectedBus, onSelectBus, selectedR
             </div>
           ) : (
             filteredBuses.map(bus => {
-              const route = ROUTES[bus.route_id]
-              const nextStop = STOPS[bus.next_stop]
+              const route = routes[bus.route_id]
+              const nextStop = stops[bus.next_stop]
               const eta = formatETA(bus.eta_next_stop_seconds)
               const isSelected = selectedBus === bus.id
 
@@ -75,7 +74,7 @@ export default function BottomPanel({ buses, selectedBus, onSelectBus, selectedR
 
                   <div className="bus-card-info">
                     <div className="bus-card-header">
-                      <span className="bus-card-number">{bus.bus_number}</span>
+                      <span className="bus-card-number">{bus.bus_number || 'BUS'}</span>
                       {route && (
                         <span
                           className="bus-card-route"
@@ -87,9 +86,9 @@ export default function BottomPanel({ buses, selectedBus, onSelectBus, selectedR
                     </div>
                     <div className="bus-card-location">
                       → {nextStop ? nextStop.name : 'En route'}
-                      {bus.current_location?.speed > 0 && (
+                      {(bus.speed > 0 || bus.current_location?.speed > 0) && (
                         <span style={{ marginLeft: '6px', color: 'var(--color-text-muted)' }}>
-                          · {Math.round(bus.current_location.speed)} km/h
+                          · {Math.round(bus.speed || bus.current_location.speed)} km/h
                         </span>
                       )}
                     </div>
