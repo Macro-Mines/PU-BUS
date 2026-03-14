@@ -1,8 +1,20 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react'
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet'
+import { useCallback, useEffect, useRef, useMemo, useState } from 'react'
+import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CAMPUS_CENTER, DEFAULT_ZOOM, ROUTES, STOPS } from '../data/demoData'
+
+// ─── Distance Helper (Haversine) ─────────────────────
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371 // Radius of the earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = 
+    0.5 - Math.cos(dLat)/2 + 
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    (1 - Math.cos(dLon))/2
+  return R * 2 * Math.asin(Math.sqrt(a)) * 1000 // Distance in meters
+}
 
 // ─── Custom Bus Icon ─────────────────────────────────
 function createBusIcon(color, label) {
@@ -20,6 +32,19 @@ function createBusIcon(color, label) {
     popupAnchor: [0, -30]
   })
 }
+
+// ─── Custom User Icon ────────────────────────────────
+const userIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: `
+    <div class="user-marker-wrap">
+      <div class="user-marker-pulse"></div>
+      <div class="user-marker-dot"></div>
+    </div>
+  `,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10]
+})
 
 // ─── Custom Stop Icon ────────────────────────────────
 function createStopIcon() {
@@ -40,6 +65,50 @@ function createStopIcon() {
 
 const stopIcon = createStopIcon()
 
+// ─── User Location Marker Logic ──────────────────────
+function UserLocationMarker({ enabled, onNearestStopFound }) {
+  const [position, setPosition] = useState(null)
+  const map = useMap()
+
+  useMapEvents({
+    locationfound(e) {
+      setPosition(e.latlng)
+      map.flyTo(e.latlng, 17)
+      
+      // Find nearest stop
+      let nearest = null
+      let minDistance = Infinity
+      
+      Object.values(STOPS).forEach(stop => {
+        const dist = getDistance(e.latlng.lat, e.latlng.lng, stop.lat, stop.lng)
+        if (dist < minDistance) {
+          minDistance = dist
+          nearest = stop
+        }
+      })
+      
+      onNearestStopFound(nearest)
+    },
+    locationerror() {
+      console.warn("Location access denied or unavailable.")
+    }
+  })
+
+  useEffect(() => {
+    if (enabled) {
+      map.locate({ watch: true, enableHighAccuracy: true })
+    } else {
+      map.stopLocate()
+      setPosition(null)
+      onNearestStopFound(null)
+    }
+  }, [enabled, map, onNearestStopFound])
+
+  return position === null ? null : (
+    <Marker position={position} icon={userIcon} zIndexOffset={2000} />
+  )
+}
+
 // ─── Fly to selected bus ─────────────────────────────
 function FlyToLocation({ position }) {
   const map = useMap()
@@ -57,7 +126,9 @@ export default function BusMap({
   selectedRoute,
   selectedBus,
   onSelectBus,
-  onSelectStop
+  onSelectStop,
+  trackingEnabled,
+  onNearestStopFound
 }) {
   const busArray = useMemo(() =>
     Object.entries(buses).map(([id, data]) => ({ id, ...data })),
@@ -94,6 +165,12 @@ export default function BusMap({
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+
+        {/* User Location Tracking */}
+        <UserLocationMarker 
+          enabled={trackingEnabled} 
+          onNearestStopFound={onNearestStopFound} 
         />
 
         {/* Fly to selected bus */}
@@ -182,3 +259,4 @@ export default function BusMap({
     </div>
   )
 }
+

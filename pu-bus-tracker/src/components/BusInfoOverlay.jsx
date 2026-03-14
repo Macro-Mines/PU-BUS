@@ -31,7 +31,7 @@ export default function BusInfoOverlay({ busId, buses, onClose }) {
       <div className="info-card">
         <div className="info-card-header">
           <div className="info-card-title">
-            🚌 {bus.bus_number} <span style={{ fontSize: '10px', opacity: 0.5 }}>(V2)</span>
+            🚌 {bus.bus_number}
           </div>
           <button className="info-close-btn" onClick={onClose}>✕</button>
         </div>

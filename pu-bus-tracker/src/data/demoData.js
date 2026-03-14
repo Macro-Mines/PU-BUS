@@ -54,17 +54,17 @@ export const ROUTES = {
       { lat: 12.029188, lng: 79.852368 }, // 9. Mega Mess
       { lat: 12.027674, lng: 79.853402 }, // 10. Boys Tea Time
       { lat: 12.028419, lng: 79.855489 }, // 11. Food Science
-      { lat: 12.028334, lng: 79.856575 }, // Checkpoint KVS
+      { lat: 12.028858, lng: 79.856544 }, // Checkpoint KVS
       { lat: 12.032330, lng: 79.856865 }, // 12. Mass Media
       { lat: 12.033131, lng: 79.857597 }, // 13. SJ Bus Stop
       { lat: 12.032327, lng: 79.858761 }, // Checkpoint UGC
       { lat: 12.031327, lng: 79.857984 }, // 14. UNESCO Bus Stop
-      
+
       // Return Path: 14 -> 1 (Back along the same checkpoints)
       { lat: 12.032327, lng: 79.858761 }, // Checkpoint UGC
       { lat: 12.033131, lng: 79.857597 }, // 13. SJ Bus Stop
       { lat: 12.032330, lng: 79.856865 }, // 12. Mass Media
-      { lat: 12.028334, lng: 79.856575 }, // Checkpoint KVS
+      { lat: 12.028858, lng: 79.856544 }, // Checkpoint KVS
       { lat: 12.028419, lng: 79.855489 }, // 11. Food Science
       { lat: 12.027674, lng: 79.853402 }, // 10. Boys Tea Time
       { lat: 12.029188, lng: 79.852368 }, // 9. Mega Mess

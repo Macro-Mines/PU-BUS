@@ -5,6 +5,7 @@ import BottomPanel from './components/BottomPanel'
 import RouteSelector from './components/RouteSelector'
 import BusInfoOverlay from './components/BusInfoOverlay'
 import StopInfoOverlay from './components/StopInfoOverlay'
+import LocationToggle from './components/LocationToggle'
 import './index.css'
 
 export default function App() {
@@ -13,6 +14,8 @@ export default function App() {
   const [selectedBus, setSelectedBus] = useState(null)
   const [selectedStop, setSelectedStop] = useState(null)
   const [showSplash, setShowSplash] = useState(true)
+  const [trackingEnabled, setTrackingEnabled] = useState(false)
+  const [nearestStop, setNearestStop] = useState(null)
 
   // Subscribe to live bus locations
   useEffect(() => {
@@ -59,6 +62,8 @@ export default function App() {
           selectedBus={selectedBus}
           onSelectBus={handleSelectBus}
           onSelectStop={handleSelectStop}
+          trackingEnabled={trackingEnabled}
+          onNearestStopFound={setNearestStop}
         />
 
         {/* Header */}
@@ -77,6 +82,13 @@ export default function App() {
         <RouteSelector
           selectedRoute={selectedRoute}
           onSelectRoute={setSelectedRoute}
+        />
+
+        {/* User Location Controls */}
+        <LocationToggle 
+          active={trackingEnabled} 
+          onClick={() => setTrackingEnabled(!trackingEnabled)}
+          nearestStop={nearestStop}
         />
 
         {/* Info Overlays */}
