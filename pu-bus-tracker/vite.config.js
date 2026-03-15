@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
-    react(), 
+    react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'PU Bus Tracker',
         short_name: 'Bus Tracker',
-        description: 'Parul University Live Bus Tracking',
+        description: 'Pondicherry University Live Bus Tracking',
         theme_color: '#ffffff',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
@@ -23,7 +23,7 @@ export default defineConfig({
     })
   ],
   server: {
-    port: 5173,
+    port: 5174,
     host: true
   }
 })
