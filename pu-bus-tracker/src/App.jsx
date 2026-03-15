@@ -7,6 +7,7 @@ import BusInfoOverlay from './components/BusInfoOverlay'
 import StopInfoOverlay from './components/StopInfoOverlay'
 import LocationToggle from './components/LocationToggle'
 import InstallPrompt from './components/InstallPrompt'
+import AboutSection from './components/AboutSection'
 import './index.css'
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [trackingEnabled, setTrackingEnabled] = useState(false)
   const [nearestStop, setNearestStop] = useState(null)
+  const [isAboutOpen, setIsAboutOpen] = useState(false)
 
   // Subscribe to live bus locations
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function App() {
 
         {/* Header */}
         <div className="header">
-          <div className="logo-pill">
+          <div className="logo-pill" onClick={() => setIsAboutOpen(true)} style={{ cursor: 'pointer' }}>
             <div className="logo-icon">🚌</div>
             <span className="logo-text">PU BUS</span>
           </div>
@@ -142,6 +144,12 @@ export default function App() {
         )}
         {/* PWA Install Prompt */}
         <InstallPrompt />
+
+        {/* About Section */}
+        <AboutSection 
+          isOpen={isAboutOpen} 
+          onClose={() => setIsAboutOpen(false)} 
+        />
       </div>
     </>
   )

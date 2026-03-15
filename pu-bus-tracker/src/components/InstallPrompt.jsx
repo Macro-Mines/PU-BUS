@@ -44,11 +44,11 @@ export default function InstallPrompt() {
 
     // Show the install prompt
     deferredPrompt.prompt()
-    
+
     // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice
     console.log(`User response to the install prompt: ${outcome}`)
-    
+
     // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null)
     setShowPrompt(false)
@@ -62,7 +62,7 @@ export default function InstallPrompt() {
         <button className="install-close" onClick={() => setShowPrompt(false)}>
           <X size={18} />
         </button>
-        
+
         <div className="install-header">
           <div className="install-icon">🚌</div>
           <div className="install-title-group">
