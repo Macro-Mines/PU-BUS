@@ -8,7 +8,12 @@ export default function BusInfoOverlay({ busId, buses, routes, stops, onClose })
 
   const route = routes[bus.route_id]
   const nextStopId = bus.next_stop
-  const routeStops = route ? route.stops.map(sId => ({ ...stops[sId], id: sId })).filter(s => s.name) : []
+  let routeStops = route ? route.stops.map(sId => ({ ...stops[sId], id: sId })).filter(s => s.name) : []
+  
+  if (bus.direction === 'backward') {
+    routeStops.reverse();
+  }
+
   const etaMins = bus.eta_next_stop_seconds ? Math.ceil(bus.eta_next_stop_seconds / 60) : '—'
 
   // Find index of next stop to determine "current" stop (previous one)
