@@ -122,6 +122,88 @@ function FlyToLocation({ position }) {
   return null
 }
 
+// ─── Smooth Bus Marker ──────────────────────────────
+function SmoothBusMarker({ bus, route, stops, onSelectBus }) {
+  const [renderPos, setRenderPos] = useState(null)
+  const targetPos = useMemo(() => {
+    const lat = bus.latitude || bus.current_location?.lat
+    const lng = bus.longitude || bus.current_location?.lng
+    return lat && lng ? [lat, lng] : null
+  }, [bus])
+
+  // Simple interpolation logic
+  useEffect(() => {
+    if (!targetPos) return
+    if (!renderPos) {
+      setRenderPos(targetPos)
+      return
+    }
+
+    // If jump is too large (e.g. initial load), don't animate
+    const dist = getDistance(renderPos[0], renderPos[1], targetPos[0], targetPos[1])
+    if (dist > 500) {
+      setRenderPos(targetPos)
+      return
+    }
+
+    let animationId
+    const startTime = performance.now()
+    const duration = 1000 // Match the 1s sync interval
+    const startPos = [...renderPos]
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      
+      const currentLat = startPos[0] + (targetPos[0] - startPos[0]) * progress
+      const currentLng = startPos[1] + (targetPos[1] - startPos[1]) * progress
+      
+      setRenderPos([currentLat, currentLng])
+
+      if (progress < 1) {
+        animationId = requestAnimationFrame(animate)
+      }
+    }
+
+    animationId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animationId)
+  }, [targetPos])
+
+  if (!renderPos) return null
+
+  const color = route?.color || '#4285F4'
+  const nextStop = stops[bus.next_stop]
+  const etaMins = bus.eta_next_stop_seconds
+    ? Math.ceil(bus.eta_next_stop_seconds / 60)
+    : '—'
+
+  return (
+    <Marker
+      position={renderPos}
+      icon={createBusIcon(color, bus.bus_number || 'BUS')}
+      zIndexOffset={1000}
+      eventHandlers={{
+        click: () => onSelectBus(bus.id)
+      }}
+    >
+      <Popup className="bus-popup" closeButton={false}>
+        <div className="popup-title">🚌 {bus.bus_number || 'BUS'}</div>
+        <div className="popup-subtitle" style={{ color: color }}>
+          {route?.name || 'In Service'}
+        </div>
+        <div className="popup-detail">
+          → {nextStop?.name || 'En route'} · <strong>{etaMins} min</strong>
+        </div>
+        {(bus.speed > 0 || bus.current_location?.speed > 0) && (
+          <div className="popup-detail">
+            ⚡ {Math.round(bus.speed || bus.current_location.speed)} km/h
+          </div>
+        )}
+      </Popup>
+    </Marker>
+  )
+}
+
 // ─── Main Component ──────────────────────────────────
 export default function BusMap({
   buses,
@@ -243,46 +325,16 @@ export default function BusMap({
           )
         })}
 
-        {/* Bus Markers */}
-        {busArray.map(bus => {
-          const route = routes[bus.route_id]
-          const color = route?.color || '#4285F4'
-          const lat = bus.latitude || bus.current_location?.lat
-          const lng = bus.longitude || bus.current_location?.lng
-          if (!lat || !lng) return null
-
-          const nextStop = stops[bus.next_stop]
-          const etaMins = bus.eta_next_stop_seconds
-            ? Math.ceil(bus.eta_next_stop_seconds / 60)
-            : '—'
-
-          return (
-            <Marker
-              key={bus.id}
-              position={[lat, lng]}
-              icon={createBusIcon(color, bus.bus_number || 'BUS')}
-              zIndexOffset={1000}
-              eventHandlers={{
-                click: () => onSelectBus(bus.id)
-              }}
-            >
-              <Popup className="bus-popup" closeButton={false}>
-                <div className="popup-title">🚌 {bus.bus_number || 'BUS'}</div>
-                <div className="popup-subtitle" style={{ color: color }}>
-                  {route?.name || 'In Service'}
-                </div>
-                <div className="popup-detail">
-                  → {nextStop?.name || 'En route'} · <strong>{etaMins} min</strong>
-                </div>
-                {(bus.speed > 0 || bus.current_location?.speed > 0) && (
-                  <div className="popup-detail">
-                    ⚡ {Math.round(bus.speed || bus.current_location.speed)} km/h
-                  </div>
-                )}
-              </Popup>
-            </Marker>
-          )
-        })}
+        {/* Smooth Bus Markers */}
+        {busArray.map(bus => (
+          <SmoothBusMarker
+            key={bus.id}
+            bus={bus}
+            route={routes[bus.route_id]}
+            stops={stops}
+            onSelectBus={onSelectBus}
+          />
+        ))}
       </MapContainer>
     </div>
   )
