@@ -253,6 +253,40 @@
 
 @media (max-width: 480px) {
   .about-modal {
-    padding: 24px;
+    padding: 20px;
+  }
+
+  .developer-card {
+    aspect-ratio: auto;
+    min-height: 220px;
+    padding: 20px;
+  }
+
+  .dev-name {
+    font-size: 13px;
+    letter-spacing: 1.5px;
+  }
+
+  .dev-id-number {
+    font-size: 14px;
+    margin: 10px 0;
+  }
+
+  .dev-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .social-links {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .card-logo {
+    font-size: 24px;
+    position: absolute;
+    top: 20px;
+    right: 20px;
   }
 }
